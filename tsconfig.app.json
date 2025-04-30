@@ -1,0 +1,21 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"], // Standard Vite includes
+  "exclude": ["src/**/__tests__/*"], // Standard Vite exclude
+  "compilerOptions": {
+    // Existing options
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    // Added/Ensured options
+    "composite": true, // Important for project references
+    "baseUrl": ".",    // Base directory for path resolution
+    "paths": {         // Path aliases
+      "@/*": ["src/*"]
+    }
+  }
+}
