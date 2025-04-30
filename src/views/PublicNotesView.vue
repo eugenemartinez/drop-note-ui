@@ -32,7 +32,7 @@ const currentPage = ref<number>(1);
 const totalPages = ref<number>(1);
 const limit = ref<number>(10);
 const searchTerm = ref('');
-const sortBy = ref('date_desc');
+const sortBy = ref('updated_at_desc');
 const selectedTagFilter = ref<string | null>(route.query.tag as string || null);
 const showFilters = ref(false); // Add this state variable
 const observer = ref<IntersectionObserver | null>(null);
@@ -100,46 +100,33 @@ watch(sortBy, () => { currentPage.value = 1; loadNotes(1, false); });
 // Intersection Observer Callback
 const handleIntersection = (entries: IntersectionObserverEntry[]) => {
     const entry = entries[0];
-    if (entry.isIntersecting && !isLoadingMore.value && currentPage.value < totalPages.value) {
+    // Only trigger load here
+    if (entry.isIntersecting && !isLoading.value && !isLoadingMore.value && currentPage.value < totalPages.value) {
         loadNotes(currentPage.value + 1, true);
     }
 };
 
-// Observer Management
+// Observer Management - Simplified
 const manageObserver = async () => {
-    await nextTick();
+    await nextTick(); // Ensure DOM is updated
     const sentinelEl = sentinel.value;
-    if (!sentinelEl) {
-        observer.value?.disconnect();
-        return;
-    }
-    if (currentPage.value < totalPages.value && notes.value.length > 0) {
+
+    // Always disconnect first to avoid observing multiple times
+    observer.value?.disconnect();
+
+    // Only observe if there's a sentinel, we are not loading, and there are more pages
+    if (sentinelEl && !isLoading.value && !isLoadingMore.value && currentPage.value < totalPages.value && notes.value.length > 0) {
         observer.value?.observe(sentinelEl);
-    } else {
-        observer.value?.disconnect();
     }
 };
 
-// Visibility Check
-const checkAndLoadIfVisible = () => {
-    if (sentinel.value && !isLoading.value && !isLoadingMore.value && currentPage.value < totalPages.value) {
-        const sentinelRect = sentinel.value.getBoundingClientRect();
-        const isVisible = sentinelRect.top <= (window.innerHeight + rootMarginValue);
-        if (isVisible) {
-            loadNotes(currentPage.value + 1, true);
-        }
-    } else {
-    }
-};
-
-// Watcher for state changes
+// Watcher for state changes - SIMPLIFIED
 watch([notes, isLoading, isLoadingMore, currentPage, totalPages], async () => {
+    // Only manage the observer state after loading finishes
     if (!isLoading.value && !isLoadingMore.value) {
          await manageObserver();
-         checkAndLoadIfVisible();
-    } else {
     }
-}, { deep: true, flush: 'post' });
+}, { deep: true, flush: 'post' }); // flush: 'post' ensures it runs after DOM updates
 
 // --- LIFECYCLE HOOKS ---
 onMounted(async () => {
@@ -151,11 +138,13 @@ onMounted(async () => {
 
   observer.value = new IntersectionObserver(handleIntersection, {
       root: null,
-      rootMargin: `${rootMarginValue}px`,
-      threshold: 0
+      rootMargin: `${rootMarginValue}px`, // Keep your rootMargin
+      threshold: 0 // Trigger as soon as 1px is visible
   });
-  // Load notes using the potentially updated selectedTagFilter
+
   await loadNotes(currentPage.value);
+  // Initial manageObserver call might be needed here if loadNotes finishes quickly
+  // await manageObserver(); // Consider adding this if observer doesn't attach initially
 });
 
 onUnmounted(() => {
@@ -214,8 +203,8 @@ onUnmounted(() => {
 
       <!-- Sort Select (Mobile) -->
       <select v-model="sortBy" class="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white text-sm">
-        <option value="date_desc">Sort by Date (Newest)</option>
-        <option value="date_asc">Sort by Date (Oldest)</option>
+        <option value="updated_at_desc">Sort by Date (Newest)</option>
+        <option value="updated_at_asc">Sort by Date (Oldest)</option> 
         <option value="title_asc">Sort by Title (A-Z)</option>
         <option value="title_desc">Sort by Title (Z-A)</option>
       </select>
@@ -294,8 +283,8 @@ onUnmounted(() => {
 
           <!-- Sort Select (Desktop) -->
           <select v-model="sortBy" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white flex-shrink-0 text-sm cursor-pointer">
-            <option value="date_desc">Sort by Date (Newest)</option>
-            <option value="date_asc">Sort by Date (Oldest)</option>
+            <option value="updated_at_desc">Sort by Date (Newest)</option>
+            <option value="updated_at_asc">Sort by Date (Oldest)</option> 
             <option value="title_asc">Sort by Title (A-Z)</option>
             <option value="title_desc">Sort by Title (Z-A)</option>
           </select>

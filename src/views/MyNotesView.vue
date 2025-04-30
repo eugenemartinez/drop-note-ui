@@ -79,9 +79,18 @@ const filteredAndSortedNotes = computed(() => {
             (note.tags && note.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm)))
         );
     }
+
     switch (sortBy.value) {
         case 'date_asc':
-            result.sort((a, b) => new Date(a.updated_at || a.created_at).getTime() - new Date(b.updated_at || b.created_at).getTime());
+            result.sort((a, b) => {
+                const dateA = new Date(a.updated_at || a.created_at).getTime() || 0;
+                const dateB = new Date(b.updated_at || b.created_at).getTime() || 0;
+                if (dateA !== dateB) {
+                    return dateA - dateB; // Primary: date ASC
+                }
+                // Secondary (tie-breaker): title ASC
+                return a.title.localeCompare(b.title);
+            });
             break;
         case 'title_asc':
             result.sort((a, b) => a.title.localeCompare(b.title));
@@ -91,7 +100,15 @@ const filteredAndSortedNotes = computed(() => {
             break;
         case 'date_desc':
         default:
-            result.sort((a, b) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime());
+            result.sort((a, b) => {
+                const dateA = new Date(a.updated_at || a.created_at).getTime() || 0;
+                const dateB = new Date(b.updated_at || b.created_at).getTime() || 0;
+                if (dateB !== dateA) {
+                    return dateB - dateA; // Primary: date DESC
+                }
+                // Secondary (tie-breaker): title DESC <-- CHANGE THIS LINE
+                return b.title.localeCompare(a.title);
+            });
             break;
     }
     return result;
