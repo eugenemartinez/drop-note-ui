@@ -303,14 +303,14 @@ const handleSubmit = () => {
 
         <!-- Code -->
         <IconButton
-          :title="'Code (Monospace)'"
+          :title="'Code Block'"
           variant="ghost"
           size="sm"
-          @click="editor.chain().focus().toggleCode().run()"
-          :disabled="!editor.can().chain().focus().toggleCode().run()"
+          @click="editor.chain().focus().toggleCodeBlock().run()"
+          :disabled="!editor.can().chain().focus().toggleCodeBlock().run()"
           :class="[
             'rounded',
-            { 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200': editor.isActive('code') }
+            { 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200': editor.isActive('codeBlock') }
           ]"
         >
           <CodeBracketIcon class="h-4 w-4" />

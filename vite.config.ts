@@ -8,7 +8,8 @@ import tailwindcss from '@tailwindcss/vite' // Keep existing import
 export default defineConfig({
   plugins: [
     vue(),
-    tailwindcss() // Keep existing plugin
+    tailwindcss(),
+
   ],
   resolve: { // Add this resolve block
     alias: {
