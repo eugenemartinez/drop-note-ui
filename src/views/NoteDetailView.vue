@@ -11,13 +11,15 @@ import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import IconButton from '@/components/common/IconButton.vue';
 import BaseButton from '@/components/common/BaseButton.vue'; // <-- Import BaseButton
 import AlertMessage from '@/components/common/AlertMessage.vue'; // <-- Import AlertMessage
+import ShareNoteModal from '@/components/ShareNoteModal.vue'; // <-- Import ShareNoteModal
 // --- Add Headless UI Imports ---
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue';
 import {
     BookmarkIcon as BookmarkOutlineIcon,
     PencilIcon,
     TrashIcon,
-    EllipsisHorizontalCircleIcon // Or your preferred ellipsis icon
+    EllipsisHorizontalCircleIcon, // Or your preferred ellipsis icon
+    ShareIcon // <-- Import ShareIcon
 } from '@heroicons/vue/24/outline';
 import {
     BookmarkIcon as BookmarkSolidIcon
@@ -36,7 +38,18 @@ const updateError = ref<string | null>(null);
 const showDeleteModal = ref(false);
 const isDeleting = ref(false);
 const deleteError = ref<string | null>(null);
+const showShareModal = ref(false); // <-- Add state for share modal
 const { addNotification } = useNotifications();
+
+// --- Computed property for current URL ---
+const currentPageUrl = computed(() => {
+  // Check if running in a browser environment before accessing window
+  if (typeof window !== 'undefined') {
+    return window.location.href;
+  }
+  return ''; // Return empty string or handle server-side rendering case if applicable
+});
+// --- End computed property ---
 
 const handleSaveToggle = () => {
     toggleSaveNote(props.id);
@@ -91,6 +104,9 @@ const handleNoteDelete = async (payload: { id: string; modificationCode: string 
         isDeleting.value = false;
     }
 };
+const handleShareNote = () => {
+  showShareModal.value = true;
+};
 const loadNote = async (noteId: string) => {
   isLoading.value = true;
   error.value = null;
@@ -115,11 +131,9 @@ const formattedUpdatedAt = computed(() => {
 onMounted(() => { loadNote(props.id); });
 watch(() => props.id, (newId) => { loadNote(newId); });
 
-// --- Add this handler function ---
 const handleTagClick = (tag: string) => {
     router.push({ name: 'PublicNotes', query: { tag: tag } });
 };
-// --- End handler function ---
 
 </script>
 
@@ -226,6 +240,12 @@ const handleTagClick = (tag: string) => {
                       </button>
                     </MenuItem>
                     <MenuItem v-slot="{ active }">
+                      <button @click="handleShareNote" :class="[ active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'group flex w-full items-center px-4 py-2 text-sm']">
+                        <ShareIcon class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
+                        Share
+                      </button>
+                    </MenuItem>
+                    <MenuItem v-slot="{ active }">
                       <button @click="openDeleteModal" :class="[ active ? 'bg-red-100 text-red-900' : 'text-red-700', 'group flex w-full items-center px-4 py-2 text-sm']">
                         <TrashIcon class="mr-3 h-5 w-5 text-red-400 group-hover:text-red-500" aria-hidden="true" />
                         Delete
@@ -258,6 +278,15 @@ const handleTagClick = (tag: string) => {
               size="md"
             >
               <PencilIcon class="h-6 w-6" aria-hidden="true" />
+            </IconButton>
+            <!-- Share Button -->
+            <IconButton
+              @click="handleShareNote"
+              title="Share Note"
+              variant="secondary"
+              size="md"
+            >
+              <ShareIcon class="h-6 w-6" aria-hidden="true" />
             </IconButton>
             <!-- Delete Button -->
             <IconButton
@@ -339,6 +368,15 @@ const handleTagClick = (tag: string) => {
         @close="closeDeleteModal"
         @confirm-delete="handleNoteDelete"
     />
+
+    <!-- Share Note Modal -->
+    <ShareNoteModal
+      :show="showShareModal"
+      :note-url="currentPageUrl"
+      :note-title="note?.title"
+      @close="showShareModal = false"
+    />
+    <!-- End Share Note Modal -->
 
   </div>
 </template>
