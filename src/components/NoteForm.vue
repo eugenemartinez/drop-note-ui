@@ -155,11 +155,17 @@ onBeforeUnmount(() => { if (editor.value) { editor.value.destroy(); } });
 
 // --- Tag Handling Logic ---
 const addTag = (value?: string) => {
-  const tagToAdd = (value ?? tagInputValue.value).trim();
+  // Use the provided value or the current input value
+  const tagToAddRaw = value ?? tagInputValue.value;
+  const tagToAdd = tagToAddRaw.trim(); // Trim whitespace
+
+  // Check if tag is non-empty, not already included, and under the limit
   if (tagToAdd && !tagList.value.includes(tagToAdd) && tagList.value.length < 10) {
     tagList.value.push(tagToAdd);
     validateTags(); // Re-validate tags after adding
   }
+  // Always clear the input field after attempting to add (even if it failed)
+  // This handles clearing after Enter press and after processing pasted tags
   tagInputValue.value = '';
 };
 
@@ -170,22 +176,33 @@ const removeTag = (tagToRemove: string) => {
 
 const handleBackspace = () => {
   if (!tagInputValue.value && tagList.value.length > 0) {
-    // Store the tag to remove before modifying the list
     const tagToRemove = tagList.value[tagList.value.length - 1];
-    removeTag(tagToRemove); // This calls validateTags
+    removeTag(tagToRemove);
   }
 };
 
-// CORRECTED: handleTagInput now accepts the new value string directly
+// --- MODIFIED handleTagInput ---
 const handleTagInput = (newValue: string) => {
-    // If the new value contains a comma, add the tag before the comma
+    // Check if the new value contains a comma, indicating potential paste or multi-tag entry
     if (newValue.includes(',')) {
-        const valueBeforeComma = newValue.split(',')[0];
-        addTag(valueBeforeComma); // addTag will clear tagInputValue
+        const potentialTags = newValue.split(','); // Split the string by commas
+        potentialTags.forEach(tagPart => {
+            const trimmedTag = tagPart.trim(); // Trim whitespace from each part
+            if (trimmedTag) { // Only process non-empty parts
+                // Attempt to add the tag using the existing addTag logic
+                // which handles uniqueness and the 10-tag limit.
+                addTag(trimmedTag);
+            }
+        });
+        // Ensure the input field is cleared after processing the parts
+        // addTag already clears it, but this is a safeguard in case loop is empty
+        tagInputValue.value = '';
     } else {
-        tagInputValue.value = newValue; // Update normally if no comma
+        // If no comma is present, just update the input value normally (for regular typing)
+        tagInputValue.value = newValue;
     }
 };
+// --- END MODIFIED handleTagInput ---
 
 // --- Computed Can Submit ---
 const canSubmit = computed(() => {
